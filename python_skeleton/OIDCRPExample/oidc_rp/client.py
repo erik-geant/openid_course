@@ -43,7 +43,7 @@ class Client(object):
         args = {
             "client_id": self.client.client_id,
             "response_type": "code",
-            "scope": ["openid"],
+            "scope": ["openid email"],
             "nonce": session["nonce"],
             "redirect_uri": self.client.registration_response["redirect_uris"][0],
             "state": session["state"]
