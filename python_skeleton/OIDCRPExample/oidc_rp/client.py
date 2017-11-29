@@ -5,6 +5,9 @@ from pprint import pformat
 from oic.oic import Client as OIDCClient
 from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
+from oic import rndstr
+from oic.utils.http_util import Redirect
+
 __author__ = 'regu0004'
 
 
@@ -18,18 +21,32 @@ class Client(object):
     def __init__(self, client_metadata):
         self.client = OIDCClient(client_authn_method=CLIENT_AUTHN_METHOD)
 
-        self.provider_info = self.client.provider_config(Client.OP_URI)
+        provider_info = self.client.provider_config(Client.OP_URI)
 
-        print(self.provider_info)
-        # TODO register with the provider using the client_metadata
+        args = {
+            "redirect_uris": [Client.ISSUER + 'rp/authz_cb'],
+            "contacts": ["foo@example.com"]
+        }
+
+        self.client.register(
+            provider_info["registration_endpoint"], **args)
 
     def authenticate(self, session):
         # Use the session object to store state between requests
 
-        # TODO make authentication request
-
-        login_url = None  # TODO insert the redirect URL
-        return login_url
+        session["state"] = rndstr()
+        session["nonce"] = rndstr()
+        args = {
+            "client_id": self.client.client_id,
+            "response_type": "code",
+            "scope": ["openid"],
+            "nonce": session["nonce"],
+            "redirect_uri": self.client.registration_response["redirect_uris"][0],
+            "state": session["state"]
+        }
+        auth_req = self.client.construct_AuthorizationRequest(request_args=args)
+        login_url = auth_req.request(self.client.authorization_endpoint)
+        return [login_url]
 
     def code_flow_callback(self, auth_response, session):
         # TODO parse the authentication response
