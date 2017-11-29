@@ -28,7 +28,7 @@ class Client(object):
         provider_info = self.client.provider_config(Client.OP_URI)
 
         args = {
-            "redirect_uris": [Client.ISSUER + 'code_flow_callback'],
+            "redirect_uris": [Client.ISSUER + 'implicit_flow_callback'],
             "contacts": ["foo@example.com"]
         }
 
@@ -42,11 +42,11 @@ class Client(object):
         session["nonce"] = rndstr()
         args = {
             "client_id": self.client.client_id,
-            "response_type": "code",
-            "scope": ["openid email profile"],
+            "response_type": ["id_token", "token"],
+            "scope": ["openid"],
+            "state": session["state"],
             "nonce": session["nonce"],
-            "redirect_uri": self.client.registration_response["redirect_uris"][0],
-            "state": session["state"]
+            "redirect_uri": self.client.registration_response["redirect_uris"][0]
         }
         auth_req = self.client.construct_AuthorizationRequest(request_args=args)
         login_url = auth_req.request(self.client.authorization_endpoint)
@@ -86,14 +86,18 @@ class Client(object):
         return success_page(access_code, access_token, id_token_claims, userinfo)
 
     def implicit_flow_callback(self, auth_response, session):
-        # TODO parse the authentication response
-        # TODO validate the 'state' parameter
+        arsp = self.client.parse_response(
+            AuthorizationResponse,
+            info=auth_response,
+            sformat="urlencoded")
+
+        assert arsp["state"] == self.client.state
+
         # TODO validate the ID Token according to the OpenID Connect spec (sec 3.2.2.11.)
 
-        # TODO set the appropriate values
-        access_code = None
-        access_token = None
-        id_token_claims = None
+        access_code = arsp["code"]
+        access_token = arsp["access_token"]
+        id_token_claims = arsp["id_token"]
         return success_page(access_code, access_token, id_token_claims, None)
 
 
