@@ -7,6 +7,7 @@ from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 
 from oic import rndstr
 from oic.utils.http_util import Redirect
+from oic.oic.message import AuthorizationResponse
 
 __author__ = 'regu0004'
 
@@ -24,7 +25,7 @@ class Client(object):
         provider_info = self.client.provider_config(Client.OP_URI)
 
         args = {
-            "redirect_uris": [Client.ISSUER + 'rp/authz_cb'],
+            "redirect_uris": [Client.ISSUER + 'code_flow_callback'],
             "contacts": ["foo@example.com"]
         }
 
@@ -49,8 +50,16 @@ class Client(object):
         return [login_url]
 
     def code_flow_callback(self, auth_response, session):
-        # TODO parse the authentication response
-        # TODO validate the 'state' parameter
+
+        # response = environ["QUERY_STRING"]
+
+        rsp = self.client.parse_response(
+            AuthorizationResponse,
+            info=auth_response,
+            sformat="urlencoded")
+
+        code = rsp["code"]
+        assert rsp["state"] == session["state"]
 
         # TODO make token request
         # TODO validate the ID Token according to the OpenID Connect spec (sec 3.1.3.7.)
