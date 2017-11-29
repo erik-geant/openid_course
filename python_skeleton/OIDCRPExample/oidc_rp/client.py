@@ -43,7 +43,7 @@ class Client(object):
         session["nonce"] = rndstr()
         args = {
             "client_id": self.client.client_id,
-            "response_type": ["id_token", "token"],
+            "response_type": ["id_token token"],
             "scope": ["openid"],
             "state": session["state"],
             "nonce": session["nonce"],
@@ -76,7 +76,6 @@ class Client(object):
         assert isinstance(trsp, AccessTokenResponse)
         # TODO validate the ID Token according to the OpenID Connect spec (sec 3.1.3.7.)
 
-        # TODO make userinfo request
         userinfo = self.client.do_user_info_request(state=arsp["state"])
         assert isinstance(userinfo, OpenIDSchema)
 
@@ -92,14 +91,17 @@ class Client(object):
             info=auth_response,
             sformat="urlencoded")
 
-        assert arsp["state"] == self.client.state
+        assert arsp["state"] == session["state"]
 
         # TODO validate the ID Token according to the OpenID Connect spec (sec 3.2.2.11.)
 
-        access_code = arsp["code"]
+        userinfo = self.client.do_user_info_request(state=arsp["state"])
+        assert isinstance(userinfo, OpenIDSchema)
+
+        access_code = None
         access_token = arsp["access_token"]
         id_token_claims = arsp["id_token"]
-        return success_page(access_code, access_token, id_token_claims, None)
+        return success_page(access_code, access_token, id_token_claims, userinfo)
 
 
 def success_page(auth_code, access_token, id_token_claims, userinfo):
