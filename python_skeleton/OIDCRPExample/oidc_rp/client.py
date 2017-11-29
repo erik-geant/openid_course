@@ -13,11 +13,14 @@ class Client(object):
     ROOT_PATH = "/Users/reid/workspace/openid_course"
     # TODO specify the correct URL
     ISSUER = "http://localhost:8090/"
+    OP_URI = "https://op1.test.inacademia.org"
 
     def __init__(self, client_metadata):
         self.client = OIDCClient(client_authn_method=CLIENT_AUTHN_METHOD)
 
-        # TODO get the provider configuration information
+        self.provider_info = self.client.provider_config(Client.OP_URI)
+
+        print(self.provider_info)
         # TODO register with the provider using the client_metadata
 
     def authenticate(self, session):
