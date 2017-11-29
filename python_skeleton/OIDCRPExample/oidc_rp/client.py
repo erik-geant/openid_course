@@ -47,7 +47,24 @@ class Client(object):
             "scope": ["openid"],
             "state": session["state"],
             "nonce": session["nonce"],
-            "redirect_uri": self.client.registration_response["redirect_uris"][0]
+            "redirect_uri": self.client.registration_response["redirect_uris"][0],
+            "claims": {
+               "userinfo":{
+                  "given_name":{
+                     "essential": True
+                  },
+                  "family_name":{
+                     "essential": True
+                  },
+                  "nickname": None
+               },
+               "id_token":{
+                  "email":{
+                     "essential": True
+                  },
+                  "phone_number": None
+               }
+            }
         }
         auth_req = self.client.construct_AuthorizationRequest(request_args=args)
         login_url = auth_req.request(self.client.authorization_endpoint)
