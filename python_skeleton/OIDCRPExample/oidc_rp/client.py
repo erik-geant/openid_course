@@ -8,6 +8,9 @@ from oic.utils.authn.client import CLIENT_AUTHN_METHOD
 from oic import rndstr
 from oic.utils.http_util import Redirect
 from oic.oic.message import AuthorizationResponse
+from oic.oic.message import AccessTokenResponse
+from oic.oic.message import OpenIDSchema
+
 
 __author__ = 'regu0004'
 
@@ -53,23 +56,33 @@ class Client(object):
 
         # response = environ["QUERY_STRING"]
 
-        rsp = self.client.parse_response(
+        arsp = self.client.parse_response(
             AuthorizationResponse,
             info=auth_response,
             sformat="urlencoded")
 
-        code = rsp["code"]
-        assert rsp["state"] == session["state"]
+        assert arsp["state"] == session["state"]
 
-        # TODO make token request
+        args = {
+            "code": arsp["code"]
+        }
+
+        trsp = self.client.do_access_token_request(
+            state=arsp["state"],
+            request_args=args,
+            authn_method="client_secret_basic")
+
+        assert isinstance(trsp, AccessTokenResponse)
         # TODO validate the ID Token according to the OpenID Connect spec (sec 3.1.3.7.)
+
         # TODO make userinfo request
+        userinfo = self.client.do_user_info_request(state=arsp["state"])
+        assert isinstance(userinfo, OpenIDSchema)
 
         # TODO set the appropriate values
-        access_code = None
-        access_token = None
-        id_token_claims = None
-        userinfo = None
+        access_code = arsp["code"]
+        access_token = trsp["access_token"]
+        id_token_claims = trsp["id_token"]
         return success_page(access_code, access_token, id_token_claims, userinfo)
 
     def implicit_flow_callback(self, auth_response, session):
