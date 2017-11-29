@@ -30,7 +30,8 @@ class Client(object):
         args = {
             "redirect_uris": [Client.ISSUER + 'implicit_flow_callback'],
             "contacts": ["foo@example.com"],
-            "response_types": ["id_token token"]
+            "response_types": ["id_token token"],
+            "userinfo_signed_response_alg": "RS256"
         }
 
         self.client.register(
